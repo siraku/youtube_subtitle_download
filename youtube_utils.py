@@ -38,13 +38,13 @@ def get_video_title(video_id):
         print(f"Error fetching title for video {video_id}: {e}")
         return None
 
-def download_subtitles(video_id, languages=["zh-Hans", "en"]):
+def download_subtitles(video_id, languages=["zh-Hans","zh-TW", "en","zh"]):
     """Download subtitles for a given video ID, trying multiple languages."""
     try:
         transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=languages)
         subtitle_content = ""
         for entry in transcript:
-            subtitle_content = subtitle_content + entry['text']
+            subtitle_content = subtitle_content + entry['text']+' '
         print(f"Subtitles downloaded for video {video_id}")
         return subtitle_content
     except Exception as e:
