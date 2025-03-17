@@ -23,7 +23,7 @@ def get_latest_video(channel_id):
         return response["items"][0]["id"]["videoId"]
     return None
 
-def get_video_title(video_id):
+def get_video_title_and_publishdate(video_id):
     """Get the title of a video by its ID."""
     try:
         request = youtube.videos().list(
@@ -32,11 +32,11 @@ def get_video_title(video_id):
         )
         response = request.execute()
         if response["items"]:
-            return response["items"][0]["snippet"]["title"]
-        return None
+            return response["items"][0]["snippet"]["title"], response["items"][0]["snippet"]["publishedAt"]
+        return None,None
     except Exception as e:
         print(f"Error fetching title for video {video_id}: {e}")
-        return None
+        return None,None
 
 def download_subtitles(video_id, languages=["zh-Hans","zh-TW", "en","zh"]):
     """Download subtitles for a given video ID, trying multiple languages."""
