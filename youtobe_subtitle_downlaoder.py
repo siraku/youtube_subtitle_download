@@ -34,7 +34,8 @@ def main():
         
         # Convert string to datetime if it's a string
         video_published_at = datetime.fromisoformat(published_at.replace('Z', '+00:00')) if published_at else datetime.now()
-        timestamp = video_published_at.timestamp()
+        # Format the datetime as a string in YYYY-MM-DD HH:MM:SS format
+        formatted_date = video_published_at.strftime('%Y-%m-%d %H:%M:%S')
 
         video_data = VideoData(
             video_id=video_id,
@@ -49,7 +50,7 @@ def main():
             continue
 
         print(f"Summary: {summary}")
-        save_summary(video_id, video_title, summary, timestamp, "又大又好又便宜")
+        save_summary(video_id, video_title, summary, formatted_date, "又大又好又便宜")
             
 
 if __name__ == "__main__":

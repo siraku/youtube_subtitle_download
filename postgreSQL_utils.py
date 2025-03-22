@@ -14,7 +14,7 @@ DATABASE_URL = f"postgresql://{USER}:{PASSWORD}@ep-twilight-hall-a1y1uxar-pooler
 # Create engine
 engine = create_engine(DATABASE_URL)
 
-def save_summary(video_id: str, title: str, video_content_summary: str, video_timestamp: float, author: str) -> bool:
+def save_summary(video_id: str, title: str, video_content_summary: str, video_timestamp: str, author: str) -> bool:
     """Save a new summary record to the database"""
     print("Saving summary...")
     try:
