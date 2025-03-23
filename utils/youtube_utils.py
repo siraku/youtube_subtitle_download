@@ -23,6 +23,35 @@ def get_latest_video(channel_id):
         return response["items"][0]["id"]["videoId"]
     return None
 
+def get_videos_after_timestamp(channel_id, timestamp, max_results=50):
+    """
+    Get video IDs from a channel published after the specified timestamp.
+    
+    Args:
+        channel_id (str): The YouTube channel ID
+        timestamp (str): ISO 8601 timestamp format (e.g., '2023-01-01T00:00:00Z')
+        max_results (int): Maximum number of videos to retrieve (default: 50)
+    
+    Returns:
+        list: List of video IDs
+    """
+    request = youtube.search().list(
+        part="id",
+        channelId=channel_id,
+        maxResults=max_results,
+        order="date",
+        publishedAfter=timestamp,
+        type="video"
+    )
+    
+    try:
+        response = request.execute()
+        video_ids = [item["id"]["videoId"] for item in response.get("items", [])]
+        return video_ids
+    except Exception as e:
+        print(f"Error fetching videos for channel {channel_id}: {e}")
+        return []
+
 def get_video_title_and_publishdate(video_id):
     """Get the title of a video by its ID."""
     try:

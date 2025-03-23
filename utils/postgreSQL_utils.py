@@ -65,6 +65,25 @@ def get_summary_by_video_id(video_id: str) -> Optional[Dict]:
         print(f"Error retrieving summary: {e}")
         return None
 
+def get_latest_video_timestamp(author:str) -> Optional[str]:
+    """Retrieve the latest video_timestamp from the database"""
+    try:
+        with engine.connect() as conn:
+            query = text("""
+                SELECT video_timestamp
+                FROM youtube.youtube_subtitles_summary
+                WHERE author = :author
+                ORDER BY video_timestamp DESC
+                LIMIT 1
+            """)
+            result = conn.execute(query, {'author': author}).fetchone()
+            if result:
+                return result[0]
+        return None
+    except Exception as e:
+        print(f"Error retrieving latest video timestamp: {e}")
+        return None
+
 def get_all_summaries() -> List[Dict]:
     """Retrieve all summaries from the database"""
     try:
