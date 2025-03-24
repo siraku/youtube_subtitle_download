@@ -3,6 +3,7 @@ import os
 from utils.youtube_utils import get_latest_video, get_video_title_and_publishdate, download_subtitles, get_videos_after_timestamp
 from utils.gemini_utiles import generate_content
 from datetime import datetime, timedelta
+from utils.mongodb_utils import save_to_mongodb
 from utils.postgreSQL_utils import save_summary, get_latest_video_timestamp
 
 
@@ -88,7 +89,8 @@ def process_video(video_id,channel_name):
 
     print(f"Summary: {summary}")
     save_summary(video_id, video_title, "todo", formatted_date, channel_name)
-    save_to_file(video_id=video_id,channel_name=channel_name, transcript=summary)
+    save_to_mongodb(video_id, video_title, channel_name, summary, formatted_date)
+    # save_to_file(video_id=video_id,channel_name=channel_name, transcript=summary)
     
 def save_to_file(video_id,channel_name, transcript, output_dir="subtitles"):
     subtitle_file = os.path.join(output_dir, f"{channel_name}_{video_id}.txt")

@@ -29,16 +29,17 @@ def init_mongodb():
         print(e)
         return False
 
-def save_to_mongodb(video_id, title, subtitle_content):
+def save_to_mongodb(video_id, title,author, subtitle_content,update_date):
     """Save video data to MongoDB."""
+    print("Saving summary...")
     try:
-        jst = pytz.timezone('Asia/Tokyo')
         video_data = {
             'video_id': video_id,
+            'author': author,
             'title': title,
-            'subtitles': subtitle_content,
-            'created_at': datetime.datetime.now(jst)
-        }
+            'subtitles_summary': subtitle_content,
+            'update_date': update_date
+        }   
         videos_collection.update_one(
             {'video_id': video_id},
             {'$set': video_data},
