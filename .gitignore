@@ -1,3 +1,4 @@
 .env
 subtitles/
 __pycache__
+.idea

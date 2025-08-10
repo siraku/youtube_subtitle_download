@@ -14,32 +14,38 @@ DATABASE_URL = f"postgresql://{USER}:{PASSWORD}@ep-twilight-hall-a1y1uxar-pooler
 # Create engine
 engine = create_engine(DATABASE_URL)
 
-def save_summary(video_id: str, title: str, video_content_summary: str, video_timestamp: str, author: str) -> bool:
-    """Save a new summary record to the database"""
-    print("Saving summary...")
+def get_youtube_channels_info() -> List[Dict]:
+    """Retrieve all YouTube channels information from the database"""
     try:
         with engine.connect() as conn:
             query = text("""
-                INSERT INTO youtube.youtube_subtitles_summary 
-                (video_id, title, video_content_summary, video_timestamp, author)
-                VALUES (:video_id, :title, :video_content_summary, :video_timestamp, :author)
-                ON CONFLICT (video_id) DO UPDATE SET
-                title = EXCLUDED.title,
-                video_content_summary = EXCLUDED.video_content_summary,
-                video_timestamp = EXCLUDED.video_timestamp,
-                author = EXCLUDED.author
+                SELECT channel_id,channel_name, update_time
+                FROM youtube.youtube_subscribed_channel 
+                WHERE flag = TRUE
+            """)
+            result = conn.execute(query).fetchall()
+            return [{'channel_id': row[0],'channel_name':row[1], 'update_time': row[2]} for row in result]
+    except Exception as e:
+        print(f"Error retrieving YouTube channels info: {e}")
+        return []
+
+def update_youbute_channel_process_date(channel_info: dict,today) -> bool:
+    """Update the process date for a YouTube channel"""
+    try:
+        with engine.connect() as conn:
+            query = text("""
+                UPDATE youtube.youtube_subscribed_channel
+                SET update_time = :update_time
+                WHERE channel_id = :channel_id
             """)
             conn.execute(query, {
-                'video_id': video_id,
-                'title': title,
-                'video_content_summary': video_content_summary,
-                'video_timestamp': video_timestamp,
-                'author': author
+                'update_time': today,
+                'channel_id': channel_info['channel_id']
             })
             conn.commit()
-        return True
+            return True
     except Exception as e:
-        print(f"Error saving summary: {e}")
+        print(f"Error updating YouTube channel process date: {e}")
         return False
 
 def get_summary_by_video_id(video_id: str) -> Optional[Dict]:

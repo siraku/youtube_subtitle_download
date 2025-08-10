@@ -70,10 +70,13 @@ def get_video_title_and_publishdate(video_id):
 def download_subtitles(video_id, languages=["zh-Hans","zh-TW", "en","zh"]):
     """Download subtitles for a given video ID, trying multiple languages."""
     try:
-        transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=languages)
+        # Create an instance of YouTubeTranscriptApi
+        ytt_api = YouTubeTranscriptApi()
+        # Call fetch on the instance
+        transcript = ytt_api.fetch(video_id=video_id, languages=languages)
         subtitle_content = ""
-        for entry in transcript:
-            subtitle_content = subtitle_content + entry['text']+' '
+        for snippet in transcript.snippets:
+            subtitle_content = subtitle_content + snippet.text + '\n'
         print(f"Subtitles downloaded for video {video_id}")
         return subtitle_content
     except Exception as e:
@@ -83,15 +86,17 @@ def download_subtitles(video_id, languages=["zh-Hans","zh-TW", "en","zh"]):
 def download_subtitles_to_file(video_id, output_dir="subtitles", languages=["zh-Hans", "en"]):
     """Download subtitles for a given video ID, trying multiple languages."""
     try:
-        # Try fetching transcript in specified languages
-        transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=languages)
+        # Create an instance of YouTubeTranscriptApi
+        ytt_api = YouTubeTranscriptApi()
+        # Call fetch on the instance
+        transcript = ytt_api.fetch(video_id=video_id, languages=languages)
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
         subtitle_file = os.path.join(output_dir, f"{video_id}.txt")
         with open(subtitle_file, "w", encoding="utf-8") as f:
-            for entry in transcript:
-                f.write(f"{entry['start']} - {entry['text']}\n")
-        print(f"Subtitles downloaded for video {video_id} in {transcript[0]['lang']}")
+            for snippet in transcript.snippets:
+                f.write(f"{snippet.text}\n")
+        print(f"Subtitles downloaded for video {video_id} ")
         return subtitle_file
     except Exception as e:
         print(f"Error downloading subtitles for {video_id}: {e}")

@@ -4,7 +4,7 @@ from utils.youtube_utils import get_latest_video, get_video_title_and_publishdat
 from utils.gemini_utiles import generate_content
 from datetime import datetime, timedelta
 from utils.mongodb_utils import save_to_mongodb
-from utils.postgreSQL_utils import save_summary, get_latest_video_timestamp
+from utils.postgreSQL_utils import get_youtube_channels_info,update_youbute_channel_process_date
 
 
 #Go to the YouTube channel page，Right-click the page > View Page Source , Search for channel_id
@@ -19,13 +19,14 @@ def main():
     Main function that iterates through the channel information and processes each YouTube channel.
     Prints channel information and initiates the processing of each channel's videos.
     """
-    print(channel_infos)
-    for channel_name,channel_id in channel_infos.items():
-        print(channel_id,channel_name)
-        process_youbute(channel_id,channel_name)
+    subscribed_channels=get_youtube_channels_info()
+    for channel_info in subscribed_channels:
+        print("Start process channel: "+channel_info['channel_name']+" last update time: "+channel_info['update_time'].strftime('%Y-%m-%d %H:%M:%S'))
+        process_youbute(channel_info)
+        update_youbute_channel_process_date(channel_info,datetime.now())
         
 
-def process_youbute(channel_id, channel_name):
+def process_youbute(channel_info: dict):
     """
     Processes videos from a specific YouTube channel.
     
@@ -36,13 +37,15 @@ def process_youbute(channel_id, channel_name):
     Retrieves the latest video timestamp from the database and processes any new videos
     that have been uploaded since the last check.
     """
-    print(f"Processing channel: {channel_id}")
-    latest_video_timestamp = get_latest_video_timestamp(channel_name)
-    if not latest_video_timestamp:
-        print(f"No latest video timestamp found for channel {channel_id}")
-        return
-    print(f"Latest video timestamp: {latest_video_timestamp}")
+    latest_video_timestamp = channel_info['update_time']
+    channel_id=channel_info['channel_id']
     
+    # if latest_video_timestamp is not before today, then return 
+    if latest_video_timestamp.date() == datetime.now().date():
+        print("Update date is today, no need to update "+channel_info['channel_name'])
+        return
+
+
     # 将时间戳转换为 RFC 3339 格式，并添加1分钟
     dt = datetime.fromisoformat(str(latest_video_timestamp))
     dt = dt + timedelta(minutes=1)  # Add 1 minute
@@ -53,9 +56,11 @@ def process_youbute(channel_id, channel_name):
         print(f"No recent video found for channel {channel_id}")
         return
     for video_id in video_id_list: 
-        process_video(video_id,channel_name)   
+        # process_video(video_id)   
+        print("Start process video: "+video_id)
+        process_video(video_id,channel_info)
     
-def process_video(video_id,channel_name):
+def process_video(video_id,channel_info: dict):
     """
     Processes a single YouTube video by downloading its subtitles and generating a summary.
     
@@ -70,7 +75,7 @@ def process_video(video_id,channel_name):
         print(f"Failed to get video title for video {video_id}")
         return
 
-    print(f"Latest video title: {video_title}")
+    print(f"video title: {video_title}")
     subtitle_content = download_subtitles(video_id)
 
     if not subtitle_content:
@@ -86,19 +91,29 @@ def process_video(video_id,channel_name):
     if not summary:
         print(f"Failed to generate summary for video {video_id}")
         return
-
+    
     print(f"Summary: {summary}")
-    save_summary(video_id, video_title, "todo", formatted_date, channel_name)
-    save_to_mongodb(video_id, video_title, channel_name, summary, formatted_date)
+
+    # save raw data and summary to file
+    save_to_file(video_date=formatted_date,channel_name=channel_info['channel_name'], video_id=video_id,transcript=subtitle_content,summary=summary)
+
+    # save_summary(video_id, video_title, "todo", formatted_date, channel_name)
+    # save_to_mongodb(video_id, video_title, channel_name, summary, formatted_date)
     # save_to_file(video_id=video_id,channel_name=channel_name, transcript=summary)
     
-def save_to_file(video_id,channel_name, transcript, output_dir="subtitles"):
-    subtitle_file = os.path.join(output_dir, f"{channel_name}_{video_id}.txt")
+def save_to_file(video_date,channel_name, video_id,transcript,summary):
+    transcript_base_dir="subtitles/transcript"
+    summary_base_dir="subtitles/summary"
+
+    subtitle_file = os.path.join(transcript_base_dir, f"{channel_name}_{video_date}_{video_id}.txt")
     with open(subtitle_file, "w", encoding="utf-8") as f:
-        for entry in transcript:
-            f.write(f"{entry}")
-    print(f"Subtitles downloaded for video {video_id}")
+        f.write(f"{transcript}")
+
+    summary_file= os.path.join(summary_base_dir, f"{video_date}_{channel_name}_{video_id}.md")
+    with open(summary_file, "w", encoding="utf-8") as f:
+        f.write(f"{summary}")
+        
+    print("Save to file completed")
 
 if __name__ == "__main__":
     main()
-    # process_video("ZGy7hWdRMK0")
