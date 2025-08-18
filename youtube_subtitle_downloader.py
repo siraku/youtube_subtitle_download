@@ -1,5 +1,6 @@
 import re
 import os
+from time import sleep
 from utils.youtube_utils import get_latest_video, get_video_title_and_publishdate, download_subtitles, get_videos_after_timestamp
 from utils.gemini_utiles import generate_content
 from datetime import datetime, timedelta
@@ -7,7 +8,7 @@ from utils.mongodb_utils import save_to_mongodb
 from utils.postgreSQL_utils import get_youtube_channels_info,update_youbute_channel_process_date
 
 
-#Go to the YouTube channel page，Right-click the page > View Page Source , Search for channel_id
+#Go to the YouTube channel page，Right-click the page > View Page Source , Search for channelid
 channel_infos = {
         "又大又好又便宜":"UCKi9Gr3yA1gxfLt15_wbsSA",
         "老汤美股财经":"UCeTEWFsNC3eeUsn9hvsDALQ",
@@ -109,7 +110,7 @@ def save_to_file(video_date,channel_name, video_id,transcript,summary):
     with open(subtitle_file, "w", encoding="utf-8") as f:
         f.write(f"{transcript}")
 
-    summary_file= os.path.join(summary_base_dir, f"{video_date}_{channel_name}_{video_id}.md")
+    summary_file= os.path.join(summary_base_dir, f"{channel_name}_{video_date}_{video_id}.md")
     with open(summary_file, "w", encoding="utf-8") as f:
         f.write(f"{summary}")
         

@@ -1,5 +1,5 @@
 from utils.postgreSQL_utils import  get_latest_video_timestamp, get_youtube_channels_info
-from utils.youtube_utils import get_videos_after_timestamp
+from utils.youtube_utils import get_videos_after_timestamp,download_subtitles
 
 # Example usage
 # save_summary(
@@ -19,7 +19,8 @@ from utils.youtube_utils import get_videos_after_timestamp
 # print(video_ids)
 
 
-result=get_youtube_channels_info() 
-for item in result:
-    print(item['channel_id'],item['channel_name'],item['update_time'])
+# result=get_youtube_channels_info() 
+# for item in result:
+#     print(item['channel_id'],item['channel_name'],item['update_time'])
 
+download_subtitles("Sk5PJk76aZs")

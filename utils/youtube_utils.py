@@ -2,6 +2,7 @@ from googleapiclient.discovery import build
 from youtube_transcript_api import YouTubeTranscriptApi
 import os
 from dotenv import load_dotenv
+import yt_dlp
 
 # Load environment variables
 load_dotenv()
@@ -9,6 +10,9 @@ API_KEY = os.getenv('YOUTUBE_API_KEY')
 
 # Initialize YouTube API client
 youtube = build("youtube", "v3", developerKey=API_KEY)
+
+# Optional: path to cookies file (exported from browser)
+COOKIES_FILE = "youtube.com_cookies.txt" 
 
 def get_latest_video(channel_id):
     """Get the latest video ID from a channel."""
@@ -69,6 +73,7 @@ def get_video_title_and_publishdate(video_id):
 
 def download_subtitles(video_id, languages=["zh-Hans","zh-TW", "en","zh"]):
     """Download subtitles for a given video ID, trying multiple languages."""
+    print(f"start subtitles downloaded for video {video_id}")
     try:
         # Create an instance of YouTubeTranscriptApi
         ytt_api = YouTubeTranscriptApi()
@@ -77,11 +82,47 @@ def download_subtitles(video_id, languages=["zh-Hans","zh-TW", "en","zh"]):
         subtitle_content = ""
         for snippet in transcript.snippets:
             subtitle_content = subtitle_content + snippet.text + '\n'
-        print(f"Subtitles downloaded for video {video_id}")
+        print(f"finish subtitles downloaded for video {video_id}")
         return subtitle_content
     except Exception as e:
-        print(f"Error downloading subtitles for {video_id}: {e}")
-        return None
+        print(f"YouTubeTranscriptApi Error downloading subtitles for {video_id}: {e}")
+    # 2️⃣ Fallback to yt-dlp
+    try:
+        print(f"[yt-dlp] Trying to fetch subtitles for {video_id}...")
+        ydl_opts = {
+            "skip_download": True,
+            "writesubtitles": True,
+            "writeautomaticsub": True,
+            "subtitleslangs": languages,
+            "subtitlesformat": "vtt",
+            "quiet": True,
+            "outtmpl": f"{video_id}.%(ext)s"
+        }
+        if COOKIES_FILE and os.path.exists(COOKIES_FILE):
+            ydl_opts["cookiefile"] = COOKIES_FILE
+
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(f"https://www.youtube.com/watch?v={video_id}", download=False)
+            # Download subs to file
+            ydl.download([f"https://www.youtube.com/watch?v={video_id}"])
+
+        # Find the .vtt file and read it
+        vtt_file = f"{video_id}.vtt"
+        if os.path.exists(vtt_file):
+            with open(vtt_file, "r", encoding="utf-8") as f:
+                lines = f.readlines()
+            # Filter out timestamps and metadata
+            subtitle_content = "\n".join(line.strip() for line in lines if line.strip() and not line.strip().isdigit() and "-->" not in line)
+            os.remove(vtt_file)  # Clean up
+            print(f"[yt-dlp] Subtitles downloaded for {video_id}")
+            return subtitle_content
+        else:
+            print(f"[yt-dlp] No .vtt file found for {video_id}")
+            return None
+
+    except Exception as e:
+        print(f"[yt-dlp] Error fetching subtitles for {video_id}: {e}")
+        return None    
 
 def download_subtitles_to_file(video_id, output_dir="subtitles", languages=["zh-Hans", "en"]):
     """Download subtitles for a given video ID, trying multiple languages."""
