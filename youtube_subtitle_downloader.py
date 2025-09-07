@@ -103,8 +103,10 @@ def process_video(video_id,channel_info: dict):
     # save_to_file(video_id=video_id,channel_name=channel_name, transcript=summary)
     
 def save_to_file(video_date,channel_name, video_id,transcript,summary):
-    transcript_base_dir="subtitles/transcript"
-    summary_base_dir="subtitles/summary"
+    # Use absolute paths instead of relative paths
+    base_dir = "/Users/siraku/Desktop/git/youtube-summarize"
+    transcript_base_dir = os.path.join(base_dir, "subtitles/transcript")
+    summary_base_dir = os.path.join(base_dir, "subtitles/summary")
 
     subtitle_file = os.path.join(transcript_base_dir, f"{channel_name}_{video_date}_{video_id}.txt")
     with open(subtitle_file, "w", encoding="utf-8") as f:
