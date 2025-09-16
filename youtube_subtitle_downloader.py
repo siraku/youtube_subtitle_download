@@ -1,11 +1,19 @@
 # import re
 import os
 # from time import sleep
+import signal
+import sys
 from utils.youtube_utils import get_latest_video, get_video_title_and_publishdate, download_subtitles, get_videos_after_timestamp
 from utils.gemini_utiles import generate_content
 from datetime import datetime, timedelta
 # from utils.mongodb_utils import save_to_mongodb
 from utils.postgreSQL_utils import get_youtube_channels_info,update_youbute_channel_process_date,save_video_info_for_download
+
+
+# Timeout handler function
+def timeout_handler(signum, frame):
+    print("\nExecution timed out after 30 minutes. Terminating program.")
+    sys.exit(1)
 
 
 #Go to the YouTube channel page，Right-click the page > View Page Source , Search for channelid
@@ -20,13 +28,21 @@ def main():
     Main function that iterates through the channel information and processes each YouTube channel.
     Prints channel information and initiates the processing of each channel's videos.
     """
-    subscribed_channels=get_youtube_channels_info()
-    for channel_info in subscribed_channels:
-        print("**************************************************************************")
-        print("Start process channel: "+channel_info['channel_name']+" last update time: "+channel_info['update_time'].strftime('%Y-%m-%d %H:%M:%S'))
-        process_youbute(channel_info)
-        update_youbute_channel_process_date(channel_info,datetime.now())
-        
+    # Set 30-minute timeout
+    signal.signal(signal.SIGALRM, timeout_handler)
+    signal.alarm(30 * 60)  # 30 minutes in seconds
+    
+    try:
+        subscribed_channels=get_youtube_channels_info()
+        for channel_info in subscribed_channels:
+            print("**************************************************************************")
+            print("Start process channel: "+channel_info['channel_name']+" last update time: "+channel_info['update_time'].strftime('%Y-%m-%d %H:%M:%S'))
+            process_youbute(channel_info)
+            update_youbute_channel_process_date(channel_info,datetime.now())
+    finally:
+        # Disable the alarm when done
+        signal.alarm(0)
+
 
 def process_youbute(channel_info: dict):
     """
