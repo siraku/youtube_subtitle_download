@@ -1,5 +1,5 @@
 from googleapiclient.discovery import build
-from youtube_transcript_api import YouTubeTranscriptApi
+from youtube_transcript_api import YouTubeTranscriptApi,TranscriptsDisabled
 import os
 from dotenv import load_dotenv
 import yt_dlp
@@ -84,6 +84,9 @@ def download_subtitles(video_id, languages=["zh-Hans","zh-TW", "en","zh"]):
             subtitle_content = subtitle_content + snippet.text + '\n'
         print(f"finish subtitles downloaded for video {video_id}")
         return subtitle_content
+    except TranscriptsDisabled:
+        print(f"Subtitles are disabled for this video {video_id}")
+        return "SUBTITLE_DISABLED"
     except Exception as e:
         print(f"YouTubeTranscriptApi Error downloading subtitles for {video_id}: {e}")
     # 2️⃣ Fallback to yt-dlp

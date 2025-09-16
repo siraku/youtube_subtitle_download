@@ -54,6 +54,7 @@ if __name__ == "__main__":
     for audio_download in audio_download_list:
         channel_name = audio_download['channel_name']
         video_id = audio_download['video_id']
+        print("**********************************************")
         print("start process", channel_name, video_id)
         # Example video URL
         video_url = f"https://www.youtube.com/watch?v={video_id}"

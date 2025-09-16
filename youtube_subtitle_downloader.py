@@ -1,11 +1,11 @@
-import re
+# import re
 import os
-from time import sleep
+# from time import sleep
 from utils.youtube_utils import get_latest_video, get_video_title_and_publishdate, download_subtitles, get_videos_after_timestamp
 from utils.gemini_utiles import generate_content
 from datetime import datetime, timedelta
-from utils.mongodb_utils import save_to_mongodb
-from utils.postgreSQL_utils import get_youtube_channels_info,update_youbute_channel_process_date
+# from utils.mongodb_utils import save_to_mongodb
+from utils.postgreSQL_utils import get_youtube_channels_info,update_youbute_channel_process_date,save_video_info_for_download
 
 
 #Go to the YouTube channel page，Right-click the page > View Page Source , Search for channelid
@@ -22,6 +22,7 @@ def main():
     """
     subscribed_channels=get_youtube_channels_info()
     for channel_info in subscribed_channels:
+        print("**************************************************************************")
         print("Start process channel: "+channel_info['channel_name']+" last update time: "+channel_info['update_time'].strftime('%Y-%m-%d %H:%M:%S'))
         process_youbute(channel_info)
         update_youbute_channel_process_date(channel_info,datetime.now())
@@ -81,6 +82,10 @@ def process_video(video_id,channel_info: dict):
 
     if not subtitle_content:
         print(f"Failed to download subtitles for video {video_title}")
+        return
+    if subtitle_content == "SUBTITLE_DISABLED":
+        print(f"Subtitles are disabled for video {video_title}, channel name: {channel_info['channel_name']},save to db")
+        save_video_info_for_download(channel_info['channel_name'],video_id)
         return
     
     # Convert string to datetime if it's a string

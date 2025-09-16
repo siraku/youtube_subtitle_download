@@ -29,6 +29,53 @@ def get_youtube_channels_info() -> List[Dict]:
         print(f"Error retrieving YouTube channels info: {e}")
         return []
 
+def get_video_info_for_download() -> List[Dict]:
+    """Retrieve all YouTube video information from the database"""
+    try:
+        with engine.connect() as conn:
+            query = text("""
+                SELECT channel_name,video_id
+                FROM youtube.video_download
+            """)
+            result = conn.execute(query).fetchall()
+            return [{'channel_name': row[0],'video_id':row[1]} for row in result]
+    except Exception as e:
+        print(f"Error retrieving YouTube video info: {e}")
+        return []
+
+def delete_video_info_for_download(video_id:str) -> bool:
+    """Delete YouTube video information from the database"""
+    try:
+        with engine.connect() as conn:
+            query = text("""
+                DELETE FROM youtube.video_download
+                WHERE video_id = :video_id
+            """)
+            conn.execute(query, {'video_id': video_id})
+            conn.commit()
+            return True
+    except Exception as e:
+        print(f"Error deleting YouTube video info: {e}")
+        return False
+
+def save_video_info_for_download(channel_name:str,video_id:str) -> bool:
+    """Save YouTube video information to the database"""
+    try:
+        with engine.connect() as conn:
+            query = text("""
+                INSERT INTO youtube.video_download  (
+                    channel_name,video_id
+                ) VALUES (
+                    :channel_name,:video_id
+                )
+            """)
+            conn.execute(query, {'channel_name':channel_name,'video_id':video_id})
+            conn.commit()
+            return True
+    except Exception as e:
+        print(f"Error saving YouTube video info: {e}")
+        return False
+
 def update_youbute_channel_process_date(channel_info: dict,today) -> bool:
     """Update the process date for a YouTube channel"""
     try:
